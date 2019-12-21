@@ -63,6 +63,7 @@ int main(void)
         message.mesg_type = -1;
       }
       else if(message.mesg_type == 2){
+        cout<<"Hard : delete request"<<endl;
         Delete(message.slot_number);
         message.mesg_type = -1;
       }

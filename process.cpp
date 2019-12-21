@@ -9,6 +9,7 @@
 #include <iostream>
 #include <signal.h> 
 #include <unistd.h>
+#include <bits/stdc++.h>
 
 
 
@@ -26,9 +27,10 @@ struct operation{
 		time = t;
 		oper = o;
 		message = msg;
-        if(!o){
+        if(o){
             stringstream temp(msg); 
             temp >> slot_number;
+
         }
 	}
 };
@@ -36,9 +38,10 @@ struct operation{
 struct mesg_buf {
     mesg_buf(long mtype , string mtext , int snum){
         mesg_type = mtype;
-        string_copy(mesg_text , mtext);
+        strcpy(mesg_text,mtext.c_str());
         // mesg_text = mtext;
         slot_number = snum;
+		
     }
     long mesg_type; /* type of message */
     char mesg_text[64]; /* message text */
@@ -82,16 +85,17 @@ int main(){
 			}
 			operation entry(time , op , total_msg);
 			schedule.push_back(entry);
-			// cout<<"Process: Read new entry"<<endl;
+			//cout<<"Process: "<<total_msg<<endl;
 		}
 	}
+
     while(counter < schedule.size() ){
         while(schedule[counter].time != clk ){
             // sleep(1);
         }
 	mesg_buf new_message((long)schedule[counter].oper + 1 , schedule[counter].message , schedule[counter].slot_number );
     int x = msgsnd( msgqid , &new_message , sizeof(mesg_buf)-sizeof(long) , !IPC_NOWAIT );
-	cout<<"Process : Message sent with type "<<new_message.mesg_type<<endl;
+	cout<<"Process : Message sent with type "<<new_message.mesg_type<<" , "<<new_message.mesg_text <<endl;
 	counter++;
         sleep(1);
     }
@@ -99,7 +103,7 @@ int main(){
 }
 
 void inc_clk(int signum){
-	// cout<<"Procces: clk event"<<endl;
+	 cout<<"Procces: clk event"<<endl;
     	signal (SIGUSR2 , inc_clk);
     	clk++;
 }
@@ -108,4 +112,5 @@ void string_copy(char* dest , string src) {
     for(int i =0 ;i<src.length() ; i++){
         dest[i] = src[i];
     }
+
 }

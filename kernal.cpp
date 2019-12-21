@@ -8,9 +8,12 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
+using namespace std;
+
 int my_time  = 1;
 int count;
-using namespace std;
+int deskTime = 0;
+
 struct mesg_buffer { 
     long mesg_type; 
     char mesg_text[64];
@@ -34,7 +37,7 @@ int main(){
     
     pid_t pid = getpid();
 
-    int n = 3;
+    int n = 1;
     count = n;
 
     //create queuse
@@ -63,47 +66,75 @@ int main(){
         
     }
     //create msg queue
-    mesg_buffer message;
+    
     signal(SIGALRM,alarmHandler);
     signal(SIGCHLD,sigChildHandler);
    
 signal(SIGUSR1,sigUsr1Handler);
 signal(SIGUSR2,sigUsr2Handler);
-
+bool haveMsg = false;
     alarm(1);
-    int deskTime = 0;
-    while (count>0)
+    mesg_buffer message;
+    bool allprocessDied; 
+    allprocessDied= false;
+    while ((count > 0) || (!allprocessDied))
     {
-	//cout<<deskTime<<endl;
-        msgrcv(msgqidUpProcesses, &message, sizeof(mesg_buffer)-sizeof(long), 0, IPC_NOWAIT);
-	
-	//cout<<" out of read data " <<endl;
-        if (deskTime <= 0)
+        
+        
+        if (! haveMsg)
         {
-	    if(message.mesg_type < 3)
-            	cout<<"Kernal : Message recieved Type = "<<message.mesg_type<<" , Message = "<<message.mesg_text<<endl;
+            int recv = msgrcv(msgqidUpProcesses, &message, sizeof(mesg_buffer)-sizeof(long), 0, IPC_NOWAIT);
+            if (recv != -1)
+            {
+                haveMsg = true;
+                cout<<"Kernal: recieved valid msg"<<endl;
+                cout<<"Kernal : Message recieved Type = "<<message.mesg_type<<" , Message = "<<message.mesg_text<<endl;
+            }
+            else if(count <= 0){
+                allprocessDied = true;
+            }
+        }
+        
+	//cout<<deskTime<<endl;
+        	
+	//cout<<" out of read data " <<endl;
+        if (deskTime <= 0 && haveMsg)
+        {
+            
+
             if (message.mesg_type == 1)//add request
             {
+                cout<<"Kernal: add msg "<<message.mesg_text <<endl;
                 kill(pid,SIGUSR1);
                 int slots = getHardDiskFreeSlots(msgqidHardUP);
+                cout<<"kernal: hard disk replied "<<slots<<endl;
                 if (slots > 0)//if free slots availabe send add request
                 {
                     sendRequestToHardDisk(msgqidHardDown,message);
                     deskTime = 3;
+                    haveMsg = false;
                 }
             }
             else if (message.mesg_type == 2)//delete request
             {
-		cout<<"d5lna hna"<<endl;
+		    cout<<"kernal: delete msg with slot =  "<<message.slot_number<<endl;
                 sendRequestToHardDisk(msgqidHardDown,message);
                 deskTime = 1;
+                haveMsg = false;
             }
             
         }
     }
+   while (deskTime >0)
+   {
+       //do wala 7aga
+   }
+   kill(pid,SIGKILL);
     
 
-  msgctl(msgqidUpProcesses, IPC_RMID, NULL); 
+  msgctl(msgqidUpProcesses, IPC_RMID, NULL);
+   msgctl(msgqidHardDown, IPC_RMID, NULL);
+   msgctl(msgqidHardUP, IPC_RMID, NULL);
   
 
     
@@ -148,7 +179,7 @@ void readDataFromProceses(key_t msgqidUpProcesses,mesg_buffer &msg ){
 int getHardDiskFreeSlots(key_t msgqidHardUP){
     mesg_buffer temp;
     msgrcv(msgqidHardUP, &temp, sizeof(mesg_buffer)-sizeof(long), 0, !IPC_NOWAIT);
-	cout<<"Kernal : Hard message type ="<<temp.mesg_type<<" and number of free slots "<<temp.slot_number<<endl;
+	//cout<<"Kernal : Hard message type ="<<temp.mesg_type<<" and number of free slots "<<temp.slot_number<<endl;
     return temp.slot_number;
 }
 
@@ -156,37 +187,37 @@ void sendRequestToHardDisk(key_t msgqidHardDown,mesg_buffer &msg){
   int sendVal = msgsnd( msgqidHardDown , &msg , sizeof(mesg_buffer)-sizeof(long) , 0 );
   if(sendVal == -1)
   	perror("Errror in send");
-  else 
-    cout<<"Kernal : Sending mesg to hard with type = " << msg.mesg_type << " messgae text = " << msg.mesg_text<<endl;
+  //else 
+    //cout<<"Kernal : Sending mesg to hard with type = " << msg.mesg_type << " messgae text = " << msg.mesg_text<<endl;
 }
 
 void alarmHandler(int signum){
     	signal(SIGALRM,alarmHandler);
-	my_time++;    
-	cout<<"Kernal : Clock = "<<my_time<<endl;
+	my_time++; 
+    deskTime--;
+    //cout<<endl;
+    //cout<<"Kernal : Clock = "<<my_time<<endl<<endl;
+    //cout<<"Kernal desktime: "<<deskTime<<endl;
+    //cout<<"KERNAL: count=  "<<count<<endl;
     	alarm(1);
     	killpg(getpgrp(), SIGUSR2);
-}
+
+ }
+    
+    
+
 
 void sigChildHandler(int signum){
      int pid, stat_loc;
 
- printf("Child has sent a SIGCHLD signal #%d\n",signum);
-    bool exit = false;
-    while (! exit)
+ //cout<<"Child has sent a SIGCHLD signal"<<endl;
+    int status;
+    while (waitpid(-1,&status,WNOHANG) > 0)
     {
-        pid = waitpid(-1, &stat_loc, 0);
-        if(!(stat_loc & 0x00FF)){
-            exit = false;
-            count --;
-        }
-        else
-        {
-            exit = true;
-        }
-        
+        count--;
     }
-    signal(SIGCHLD,sigChildHandler);
+    
+
 }
 
 void sigUsr1Handler(int signum){}
