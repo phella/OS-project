@@ -90,8 +90,9 @@ void Add(char* msg)
 {
   for(int i = 0; i < SLOTS_NUMBER; i++) 
   {
-    if(slots[i] == " ")
+    if(strcmp(slots[i], " ") == 0)
     {
+      freeSlots--;
       strcpy(slots[i], msg);
       break;
     }
@@ -102,7 +103,12 @@ void Add(char* msg)
 void Delete(int n)
 {
   if(n >= 0 and n < 10)
-    strcpy(slots[n], " ");
+  {
+    if(strcmp(slots[i], " ") != 0 ) {
+      freeSlots++;
+      strcpy(slots[n], " ");
+    }
+  }
 }
 
 void Send_Status()
