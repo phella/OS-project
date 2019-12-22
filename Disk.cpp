@@ -1,4 +1,5 @@
 #include<iostream>
+#include<fstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -34,6 +35,8 @@ void Send_Status();                              //sends number of freeslots to 
 
 int main(void)
 {
+  ofstream disk_out;
+  disk_out.open("disk_out.txt");
   for(int i = 0; i < SLOTS_NUMBER; i++)           //initialize the disk to be empty
   {
     strcpy(slots[i], " ");
@@ -58,17 +61,28 @@ int main(void)
     rec_val = msgrcv(upstream, &message, sizeof(mesg_buffer)-sizeof(long), 0, IPC_NOWAIT); 
  
       if(message.mesg_type == 1){
-        cout<<"Hard : Added new message with text" << message.mesg_text <<endl;
+        disk_out<<"Hard : Added new message with text" << message.mesg_text <<endl;
         Add(message.mesg_text);
         message.mesg_type = -1;
+        for(int i = 0; i < SLOTS_NUMBER; i++) {
+          disk_out<<"slot "<<i<<" : "<<slots[i]<<endl;
+        }
+        disk_out<<"free slots : "<<freeSlots<<endl;
+        disk_out<<endl;
       }
       else if(message.mesg_type == 2){
-        cout<<"Hard : delete request"<<endl;
+        disk_out<<"Hard : delete request slot "<< message.slot_number << endl;
         Delete(message.slot_number);
         message.mesg_type = -1;
+        for(int i = 0; i < SLOTS_NUMBER; i++) {
+          disk_out<<"slot "<<i<<" : "<<slots[i]<<endl;
+        }
+        disk_out<<"free slots : "<<freeSlots<<endl;
+        disk_out<<endl;
       }
     
   }
+  disk_out.close();
   return 0;
 }
 
@@ -88,23 +102,24 @@ void user1Handler(int signum)
 
 void Add(char* msg)
 {
+  cout<<"Disk: free slots before add:" <<freeSlots<<endl;
   for(int i = 0; i < SLOTS_NUMBER; i++) 
   {
-    if(strcmp(slots[i], " ") == 0)
+    if(strcmp(slots[i]," ") == 0)
     {
       freeSlots--;
       strcpy(slots[i], msg);
       break;
     }
   }
-
+cout<<"Disk: free slots after add:" <<freeSlots<<endl;
 }
 
 void Delete(int n)
 {
   if(n >= 0 and n < 10)
   {
-    if(strcmp(slots[i], " ") != 0 ) {
+    if(strcmp(slots[n], " ") != 0) {
       freeSlots++;
       strcpy(slots[n], " ");
     }
