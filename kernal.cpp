@@ -8,7 +8,9 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include<fstream>
 using namespace std;
+
 
 int my_time  = 1;
 int count;
@@ -37,14 +39,15 @@ int main(){
     
     pid_t pid = getpid();
 
-    int n = 1;
+    int n = 2;
     count = n;
 
     //create queuse
     key_t msgqidUpProcesses = createQueue(0);//proceses
     key_t msgqidHardUP = createQueue(1);//Up stream hard
     key_t msgqidHardDown = createQueue(2);//down stream Hard
-
+    ofstream log;
+    log.open("log.txt");
 
 
     //create N processes and hard disk
@@ -77,9 +80,17 @@ bool haveMsg = false;
     mesg_buffer message;
     bool allprocessDied; 
     allprocessDied= false;
+    bool logged = false;
     while ((count > 0) || (!allprocessDied))
     {
         
+        
+        if (count <= 0 && !logged)
+        {
+            log<<endl;
+            log<<"All Processes died at "<<my_time<<endl;
+            logged = true;
+        }
         
         if (! haveMsg)
         {
@@ -87,8 +98,8 @@ bool haveMsg = false;
             if (recv != -1)
             {
                 haveMsg = true;
-                cout<<"Kernal: recieved valid msg"<<endl;
-                cout<<"Kernal : Message recieved Type = "<<message.mesg_type<<" , Message = "<<message.mesg_text<<endl;
+                //cout<<"Kernal: recieved valid msg"<<endl;
+                //cout<<"Kernal : Message recieved Type = "<<message.mesg_type<<" , Message = "<<message.mesg_text<<endl;
             }
             else if(count <= 0){
                 allprocessDied = true;
@@ -104,20 +115,29 @@ bool haveMsg = false;
 
             if (message.mesg_type == 1)//add request
             {
-                cout<<"Kernal: add msg "<<message.mesg_text <<endl;
+                log<<endl;
+                log<<"Processes Requet:  add msg "<<message.mesg_text <<"  at time: "<<my_time<<endl;
                 kill(pid,SIGUSR1);
+                log<<"Hard Request : number of free slots ? "<<"  at time: "<<my_time<<endl;
                 int slots = getHardDiskFreeSlots(msgqidHardUP);
-                cout<<"kernal: hard disk replied "<<slots<<endl;
+                log<<"Hard Response :  "<<slots<<"  at time: "<<my_time<<endl;;
                 if (slots > 0)//if free slots availabe send add request
                 {
                     sendRequestToHardDisk(msgqidHardDown,message);
                     deskTime = 3;
                     haveMsg = false;
                 }
+                else
+                {
+                    log<<"Kernal Out of space ignore last add Request at time : "<<my_time<<endl;
+                    haveMsg = false;
+                }
+                
             }
             else if (message.mesg_type == 2)//delete request
             {
-		    cout<<"kernal: delete msg with slot =  "<<message.slot_number<<endl;
+                log<<endl;
+		        log<<"Process Request: delete msg with slot =  "<<message.slot_number<<" at time: "<<my_time<<endl;
                 sendRequestToHardDisk(msgqidHardDown,message);
                 deskTime = 1;
                 haveMsg = false;
@@ -125,10 +145,13 @@ bool haveMsg = false;
             
         }
     }
+
    while (deskTime >0)
    {
        //do wala 7aga
    }
+   log<<endl;
+   log<<"All requests are done at "<<my_time<<endl;
    kill(pid,SIGKILL);
     
 
@@ -136,11 +159,11 @@ bool haveMsg = false;
    msgctl(msgqidHardDown, IPC_RMID, NULL);
    msgctl(msgqidHardUP, IPC_RMID, NULL);
   
+    log<<endl;
+    log<<"kill hard, delete msg-queues and die at "<<my_time<<endl;
+    //cout<<"parent died"<<endl;
 
-    
-    cout<<"parent died"<<endl;
-
-
+    log.close();
     return 0;
 }
 

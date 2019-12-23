@@ -1,0 +1,46 @@
+
+Processes Requet:  add msg "HELLO"  at time: 3
+Hard Request : number of free slots ?   at time: 3
+Hard Response :  10  at time: 3
+
+Processes Requet:  add msg "HELLO"  at time: 6
+Hard Request : number of free slots ?   at time: 6
+Hard Response :  9  at time: 6
+
+Processes Requet:  add msg "FUCK THIS SHIT"  at time: 9
+Hard Request : number of free slots ?   at time: 9
+Hard Response :  8  at time: 9
+
+All Processes died at 10
+
+Processes Requet:  add msg "FUCK THIS SHIT"  at time: 12
+Hard Request : number of free slots ?   at time: 12
+Hard Response :  7  at time: 12
+
+Processes Requet:  add msg "HELLO2"  at time: 15
+Hard Request : number of free slots ?   at time: 15
+Hard Response :  6  at time: 15
+
+Processes Requet:  add msg "HELLO2"  at time: 18
+Hard Request : number of free slots ?   at time: 18
+Hard Response :  5  at time: 18
+
+Processes Requet:  add msg "HELLO3"  at time: 21
+Hard Request : number of free slots ?   at time: 21
+Hard Response :  4  at time: 21
+
+Processes Requet:  add msg "HELLO3"  at time: 24
+Hard Request : number of free slots ?   at time: 24
+Hard Response :  3  at time: 24
+
+Processes Requet:  add msg "HELLO4"  at time: 27
+Hard Request : number of free slots ?   at time: 27
+Hard Response :  2  at time: 27
+
+Processes Requet:  add msg "HELLO4"  at time: 30
+Hard Request : number of free slots ?   at time: 30
+Hard Response :  1  at time: 30
+
+All requests are done at 33
+
+kill hard, delete msg-queues and die at 33
