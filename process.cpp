@@ -91,7 +91,7 @@ int main(){
 
     while(counter < schedule.size() ){
         while(schedule[counter].time != clk ){
-            // sleep(1);
+             sleep(1);
         }
 	mesg_buf new_message((long)schedule[counter].oper + 1 , schedule[counter].message , schedule[counter].slot_number );
     int x = msgsnd( msgqid , &new_message , sizeof(mesg_buf)-sizeof(long) , !IPC_NOWAIT );
