@@ -57,7 +57,7 @@ int main(){
         if (pid == 0 && i<n)
         {
 	    cout<<"Kernal : new Process instantiated"<<endl;
-            execl("process.out","process.out",NULL);
+	    execl("process.out", to_string(i).c_str(),NULL);
 
             
         }

@@ -49,16 +49,25 @@ struct mesg_buf {
 };
 
 
+string convertToString(char* a, int size) 
+{ 
+    int i; 
+    string s = ""; 
+    for (i = 0; i < size; i++) { 
+        s = s + a[i]; 
+    } 
+    return s; 
+} 
+
 void inc_clk(int signum);
 vector<operation> schedule;
 
 
-int main(){
+int main(int argc, char *argv[]){
     signal (SIGUSR2 , inc_clk);
     key_t key = ftok("OS",53);
     key_t msgqid =  msgget ( key, IPC_CREAT );
-    cout<<msgqid<<endl;
-	ifstream myfile ("input.txt");
+	ifstream myfile ("input" + convertToString(argv[0],1) + ".txt");
 	int time;
         int counter = 0;
 	string temp , msg ;
